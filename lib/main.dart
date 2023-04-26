@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:quizler/question.dart';
+import 'package:rflutter_alert/rflutter_alert.dart';
+import 'quiz_brain.dart';
 
+QuizBrain quizBrain = QuizBrain();
 void main() {
   runApp(Quizler());
 }
@@ -27,17 +29,32 @@ class QuizPage extends StatefulWidget {
 
 class _QuizPageState extends State<QuizPage> {
   int _counter = 0;
-  int questionNumber = 0;
+
+  _onCustomAnimationAlertPressed(context) {
+    Alert(
+      context: context,
+      title: "RFLUTTER ALERT",
+      desc: "Flutter is more awesome with RFlutter Alert.",
+      alertAnimation: fadeAlertAnimation,
+    ).show();
+  }
+
+  Widget fadeAlertAnimation(
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
+    return Align(
+      child: FadeTransition(
+        opacity: animation,
+        child: child,
+      ),
+    );
+  }
+
 
   List<Widget> scoreKeeper = [];
-
-  List<Question> questionBank = [
-    Question(questionText: "hello", answer: true),
-    Question(questionText: "helfd", answer: true),
-    Question(questionText: "hellodfdf", answer: false),
-    Question(questionText: "hellodfd3333f", answer: true),
-  ];
-
 
   void _incrementCounter() {
     setState(() {
@@ -45,7 +62,31 @@ class _QuizPageState extends State<QuizPage> {
     });
   }
 
-  Question myquestion = Question(questionText: "hello", answer: true);
+  void checkAnswer(bool pickedAnswer) {
+    bool correctAnswer = quizBrain.getQuestionAnwer();
+    bool active = quizBrain.getIsActive();
+    setState(() {
+      if (active == false) {
+        _onCustomAnimationAlertPressed(context);
+        quizBrain.reset();
+        scoreKeeper.clear();
+        
+      } else if (pickedAnswer == correctAnswer && active == true) {
+        print("not here ");
+        print(active);
+        scoreKeeper.add(const Icon(
+          Icons.check,
+          color: Colors.green,
+        ));
+      } else if (pickedAnswer != correctAnswer && active == true) {
+        scoreKeeper.add(const Icon(
+          Icons.cancel,
+          color: Colors.red,
+        ));
+      }
+      quizBrain.nextQuestion();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -58,7 +99,7 @@ class _QuizPageState extends State<QuizPage> {
             child: Container(
                 child: Center(
               child: Text(
-                questionBank[questionNumber].questionText,
+                quizBrain.getQuestionText(),
                 textAlign: TextAlign.center,
                 style: TextStyle(color: Colors.white, fontSize: 25),
               ),
@@ -68,29 +109,16 @@ class _QuizPageState extends State<QuizPage> {
           child: Padding(
             padding: EdgeInsets.all(15),
             child: TextButton(
-                child: Text(
-                  "True",
-                  style: TextStyle(color: Colors.white, fontSize: 20),
-                ),
                 style: ButtonStyle(
                     backgroundColor: MaterialStateProperty.all(Colors.green)),
                 onPressed: () {
-                  bool correctAnswer = questionBank[questionNumber].answer;
-                  setState(() {
-                    if (correctAnswer == true) {
-                      scoreKeeper.add(Icon(
-                        Icons.check,
-                        color: Colors.green,
-                      ));
-                    } else {
-                      scoreKeeper.add(Icon(
-                        Icons.cancel,
-                        color: Colors.red,
-                      ));
-                    }
-                    questionNumber += 1;
-                  });
-                }),
+                  bool correctAnswer = quizBrain.getQuestionAnwer();
+                  checkAnswer(true);
+                },
+                child: const Text(
+                  "True",
+                  style: TextStyle(color: Colors.white, fontSize: 20),
+                )),
           ),
         ),
         Expanded(
@@ -98,26 +126,13 @@ class _QuizPageState extends State<QuizPage> {
           child: Padding(
               padding: EdgeInsets.all(15),
               child: TextButton(
-                  child: Text("False",
+                  child: const Text("False",
                       style: TextStyle(color: Colors.white, fontSize: 20)),
                   style: ButtonStyle(
                       backgroundColor: MaterialStateProperty.all(Colors.red)),
                   onPressed: () {
-                    bool correctAnswer = questionBank[questionNumber].answer;
-                    setState(() {
-                      questionNumber += 1;
-                      if (correctAnswer == false) {
-                        scoreKeeper.add(Icon(
-                          Icons.check,
-                          color: Colors.green,
-                        ));
-                      } else {
-                        scoreKeeper.add(Icon(
-                          Icons.cancel,
-                          color: Colors.red,
-                        ));
-                      }
-                    });
+                    bool correctAnswer = quizBrain.getQuestionAnwer();
+                    checkAnswer(false);
                   })),
         ),
         Row(
